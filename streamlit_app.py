@@ -459,7 +459,7 @@ def produtos():
                             st.success(f"✅ Produto '{produto['nome']}' removido com sucesso!")
                             st.session_state.produto_selecionado = None
                             st.cache_data.clear()
-                            st.experimental_rerun()
+                            st.rerun()
                     else:
                         st.warning("⚠️ Por favor, selecione um produto para remover.")
             
@@ -469,7 +469,7 @@ def produtos():
                         produto = df_produtos[df_produtos['id'] == st.session_state.produto_selecionado].iloc[0]
                         st.session_state.produto_editando = produto.to_dict()
                         st.session_state.editando = True
-                        st.experimental_rerun()
+                        st.rerun()
                     else:
                         st.warning("⚠️ Por favor, selecione um produto para editar.")
             
@@ -525,14 +525,14 @@ def produtos():
                                 st.session_state.editando = False
                                 del st.session_state.produto_editando
                                 st.cache_data.clear()
-                                st.experimental_rerun()
+                                st.rerun()
                         else:
                             st.error("❌ Por favor, preencha todos os campos obrigatórios.")
                     
                     if cancelar:
                         st.session_state.editando = False
                         del st.session_state.produto_editando
-                        st.experimental_rerun()
+                        st.rerun()
         else:
             st.info("Nenhum produto encontrado com os filtros aplicados.")
     else:
@@ -576,7 +576,7 @@ def adicionar_produto_page():
                 if adicionar_produto(nome, descricao, categoria, preco, quantidade, estoque_minimo):
                     st.success("✅ Produto adicionado com sucesso!")
                     st.cache_data.clear()
-                    st.experimental_rerun()
+                    st.rerun()
             else:
                 st.error("❌ Por favor, preencha todos os campos obrigatórios.")
 
