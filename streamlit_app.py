@@ -725,38 +725,38 @@ def baixa_estoque():
     observacao = st.text_area("📝 Observação (opcional):", placeholder="Ex: Venda realizada")
 
     if st.button("✅ Confirmar Baixa"):
-        if quantidade_baixa > estoque_atual:
-            st.error("❌ Quantidade digitada é maior que o estoque atual. Operação cancelada.")
-            return
+      if quantidade_baixa > estoque_atual:
+         st.error("❌ Quantidade digitada é maior que o estoque atual. Operação cancelada.")
+         return
 
-        nova_qtd = estoque_atual - quantidade_baixa
-        conn = init_database()
-        cursor = conn.cursor()
-        try:
-            # Atualizar estoque do produto
-            cursor.execute(
-                "UPDATE produtos SET quantidade = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?",
-                (nova_qtd, produto["id"])
-            )
+    nova_qtd = estoque_atual - quantidade_baixa
+    conn = init_database()
+    cursor = conn.cursor()
+    try:
+        # Atualiza o estoque do produto
+        cursor.execute(
+            "UPDATE produtos SET quantidade = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?",
+            (nova_qtd, produto["id"])
+        )
 
-            # Inserir movimentação
-            cursor.execute(
-                "INSERT INTO movimentacoes (tipo, quantidade, produto_id, observacao) VALUES (?, ?, ?, ?)",
-                ("SAIDA", quantidade_baixa, produto["id"], observacao)
-            )
+        # Registra a movimentação
+        cursor.execute(
+            "INSERT INTO movimentacoes (tipo, quantidade, produto_id, observacao) VALUES (?, ?, ?, ?)",
+            ("SAIDA", quantidade_baixa, produto["id"], observacao)
+        )
 
-            conn.commit()
+        conn.commit()
 
-            st.success("✅ Baixa de estoque realizada com sucesso!")
+        st.success(f"✅ Baixa realizada! Novo estoque: {nova_qtd} unidades")
 
-            if nova_qtd <= estoque_minimo:
-                st.warning("⚠️ Atenção: Estoque ficou abaixo do mínimo!")
+        if nova_qtd <= estoque_minimo:
+            st.warning("⚠️ Atenção: Estoque ficou abaixo do mínimo!")
 
-            st.cache_data.clear()
-            st.rerun()
+        st.cache_data.clear()
+        st.rerun()
 
-        except Exception as e:
-                     st.error(f"Erro ao dar baixa no estoque: {str(e)}")
+    except Exception as e:
+        st.error(f"Erro ao dar baixa no estoque: {str(e)}")
 
 if __name__ == "__main__":
     main()
