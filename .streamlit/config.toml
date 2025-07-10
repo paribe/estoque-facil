@@ -10,3 +10,6 @@ port = 8501
 
 [browser]
 gatherUsageStats = false
+
+[runner]
+python_version = "3.9"
