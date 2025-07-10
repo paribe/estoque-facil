@@ -756,6 +756,7 @@ def baixa_estoque():
             st.rerun()
 
         except Exception as e:
+                     st.error(f"Erro ao dar baixa no estoque: {str(e)}")
 
 if __name__ == "__main__":
     main()
