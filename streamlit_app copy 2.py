@@ -373,21 +373,7 @@ def produtos():
             df_produtos = df_produtos[df_produtos['nome'].str.contains(filtro_nome, case=False, na=False)]
         
         if filtro_categoria != 'Todos':
-            # Mapear categoria para o formato do banco
-            categoria_map = {
-                'Eletrônicos': 'eletronicos',
-                'Roupas': 'roupas',
-                'Casa e Decoração': 'casa',
-                'Esporte e Lazer': 'esporte',
-                'Livros': 'livros',
-                'Alimentação': 'alimentacao',
-                'Beleza e Cuidados': 'beleza',
-                'Automotivo': 'automotivo',
-                'Ferramentas': 'ferramentas',
-                'Outros': 'outros'
-            }
-            categoria_filtro = categoria_map.get(filtro_categoria, filtro_categoria.lower())
-            df_produtos = df_produtos[df_produtos['categoria'] == categoria_filtro]
+            df_produtos = df_produtos[df_produtos['categoria'] == filtro_categoria.lower()]
         
         if filtro_status != 'Todos':
             if filtro_status == 'Normal':
@@ -412,127 +398,36 @@ def produtos():
         st.subheader(f"📋 Produtos Encontrados: {len(df_produtos)}")
         
         if not df_produtos.empty:
-            # Criar tabela com checkboxes
-            st.write("Selecione um produto para editar ou remover:")
-            
-            # Inicializar estado do produto selecionado
-            if 'produto_selecionado' not in st.session_state:
-                st.session_state.produto_selecionado = None
-            
-            # Cabeçalho da tabela
-            col_header = st.columns([0.5, 2, 1.5, 1, 1, 1, 1])
-            col_header[0].write("**Sel.**")
-            col_header[1].write("**Nome**")
-            col_header[2].write("**Categoria**")
-            col_header[3].write("**Preço**")
-            col_header[4].write("**Estoque**")
-            col_header[5].write("**Mínimo**")
-            col_header[6].write("**Status**")
-            
-            st.divider()
-            
-            # Linhas da tabela
-            for idx, row in df_produtos.iterrows():
-                cols = st.columns([0.5, 2, 1.5, 1, 1, 1, 1])
-                
-                # Checkbox para seleção
-                with cols[0]:
-                    if st.checkbox("", key=f"check_{row['id']}", label_visibility="collapsed"):
-                        st.session_state.produto_selecionado = row['id']
-                
-                # Dados do produto
-                cols[1].write(row['nome'])
-                cols[2].write(row['categoria'])
-                cols[3].write(row['preco_formatado'])
-                cols[4].write(str(row['quantidade']))
-                cols[5].write(str(row['estoque_minimo']))
-                cols[6].write(row['status'])
+            # Configurar editor de dados
+            edited_df = st.data_editor(
+                df_produtos[['nome', 'categoria', 'preco_formatado', 'quantidade', 'estoque_minimo', 'status']],
+                column_config={
+                    'nome': 'Nome',
+                    'categoria': 'Categoria',
+                    'preco_formatado': 'Preço',
+                    'quantidade': 'Estoque',
+                    'estoque_minimo': 'Estoque Mínimo',
+                    'status': 'Status'
+                },
+                disabled=['preco_formatado', 'status'],
+                use_container_width=True,
+                key="produtos_editor"
+            )
             
             # Botões de ação
             col1, col2 = st.columns(2)
             
             with col1:
                 if st.button("🗑️ Remover Produto Selecionado"):
-                    if st.session_state.produto_selecionado:
-                        produto = df_produtos[df_produtos['id'] == st.session_state.produto_selecionado].iloc[0]
-                        if remover_produto(st.session_state.produto_selecionado):
-                            st.success(f"✅ Produto '{produto['nome']}' removido com sucesso!")
-                            st.session_state.produto_selecionado = None
-                            st.cache_data.clear()
-                            st.rerun()
-                    else:
-                        st.warning("⚠️ Por favor, selecione um produto para remover.")
+                    if 'produtos_editor' in st.session_state:
+                        # Aqui você implementaria a lógica de remoção
+                        st.info("Funcionalidade de remoção em desenvolvimento")
             
             with col2:
                 if st.button("📝 Editar Produto Selecionado"):
-                    if st.session_state.produto_selecionado:
-                        produto = df_produtos[df_produtos['id'] == st.session_state.produto_selecionado].iloc[0]
-                        st.session_state.produto_editando = produto.to_dict()
-                        st.session_state.editando = True
-                        st.rerun()
-                    else:
-                        st.warning("⚠️ Por favor, selecione um produto para editar.")
-            
-            # Formulário de edição
-            if 'editando' in st.session_state and st.session_state.editando:
-                st.divider()
-                st.subheader("✏️ Editar Produto")
-                
-                produto = st.session_state.produto_editando
-                
-                with st.form("editar_produto_form"):
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        nome = st.text_input("Nome do Produto*", value=produto['nome'])
-                        categoria = st.selectbox("Categoria*", [
-                            'eletronicos', 'roupas', 'casa', 'esporte', 'livros',
-                            'alimentacao', 'beleza', 'automotivo', 'ferramentas', 'outros'
-                        ], index=[
-                            'eletronicos', 'roupas', 'casa', 'esporte', 'livros',
-                            'alimentacao', 'beleza', 'automotivo', 'ferramentas', 'outros'
-                        ].index(produto['categoria']), format_func=lambda x: {
-                            'eletronicos': 'Eletrônicos',
-                            'roupas': 'Roupas',
-                            'casa': 'Casa e Decoração',
-                            'esporte': 'Esporte e Lazer',
-                            'livros': 'Livros',
-                            'alimentacao': 'Alimentação',
-                            'beleza': 'Beleza e Cuidados',
-                            'automotivo': 'Automotivo',
-                            'ferramentas': 'Ferramentas',
-                            'outros': 'Outros'
-                        }[x])
-                        preco = st.number_input("Preço Unitário (R$)*", min_value=0.01, step=0.01, value=float(produto['preco']))
-                    
-                    with col2:
-                        quantidade = st.number_input("Quantidade em Estoque*", min_value=0, step=1, value=int(produto['quantidade']))
-                        estoque_minimo = st.number_input("Estoque Mínimo*", min_value=0, step=1, value=int(produto['estoque_minimo']))
-                        descricao = st.text_area("Descrição", value=produto.get('descricao', '') or '')
-                    
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        submitted = st.form_submit_button("💾 Salvar Alterações")
-                    
-                    with col2:
-                        cancelar = st.form_submit_button("❌ Cancelar")
-                    
-                    if submitted:
-                        if nome and categoria and preco > 0:
-                            if editar_produto(produto['id'], nome, descricao, categoria, preco, quantidade, estoque_minimo):
-                                st.success("✅ Produto atualizado com sucesso!")
-                                st.session_state.editando = False
-                                del st.session_state.produto_editando
-                                st.cache_data.clear()
-                                st.rerun()
-                        else:
-                            st.error("❌ Por favor, preencha todos os campos obrigatórios.")
-                    
-                    if cancelar:
-                        st.session_state.editando = False
-                        del st.session_state.produto_editando
-                        st.rerun()
+                    if 'produtos_editor' in st.session_state:
+                        # Aqui você implementaria a lógica de edição
+                        st.info("Funcionalidade de edição em desenvolvimento")
         else:
             st.info("Nenhum produto encontrado com os filtros aplicados.")
     else:
@@ -673,7 +568,7 @@ def main():
         
         selected = option_menu(
             menu_title="Menu Principal",
-            options=["Dashboard", "Produtos", "Adicionar Produto", "Baixa de Estoque", "Alertas", "Histórico"],
+            options=["Dashboard", "Produtos", "Adicionar Produto", "Alertas", "Histórico"],
             icons=["house", "box", "plus-circle", "exclamation-triangle", "clock-history"],
             menu_icon="cast",
             default_index=0,
@@ -692,56 +587,10 @@ def main():
         produtos()
     elif selected == "Adicionar Produto":
         adicionar_produto_page()
-    elif selected == "Baixa de Estoque":
-        baixa_estoque()    
     elif selected == "Alertas":
         alertas()
     elif selected == "Histórico":
         historico()
-
-
-# OBS: O conteúdo do streamlit_app.py original foi mantido.
-# Apenas a funcionalidade de "Baixa de Estoque" foi adicionada como uma nova página e incluída no menu.
-# Abaixo está o código da nova página "Baixa de Estoque".
-# Esta função deve ser colocada após as demais definições de páginas.
-
-def baixa_estoque():
-    st.markdown('<div class="main-header"><h1>📉 Baixa de Estoque</h1></div>', unsafe_allow_html=True)
-    
-    df_produtos = get_produtos()
-    if df_produtos.empty:
-        st.info("Nenhum produto cadastrado ainda.")
-        return
-
-    produto_nome = st.selectbox("🔍 Selecione um produto:", df_produtos["nome"].tolist())
-    produto = df_produtos[df_produtos["nome"] == produto_nome].iloc[0]
-
-    st.write(f"**Estoque atual:** {produto['quantidade']} unidades")
-    st.write(f"**Estoque mínimo:** {produto['estoque_minimo']} unidades")
-    
-    quantidade_baixa = st.number_input("📦 Quantidade para dar baixa:", min_value=1, max_value=int(produto["quantidade"]), step=1)
-    observacao = st.text_area("📝 Observação (opcional):", placeholder="Ex: Venda realizada")
-
-    if st.button("✅ Confirmar Baixa"):
-        nova_qtd = produto["quantidade"] - quantidade_baixa
-        conn = init_database()
-        cursor = conn.cursor()
-        try:
-            # Atualizar quantidade
-            cursor.execute("UPDATE produtos SET quantidade = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?", 
-                           (nova_qtd, produto["id"]))
-            # Inserir movimentação
-            cursor.execute("INSERT INTO movimentacoes (tipo, quantidade, produto_id, observacao) VALUES (?, ?, ?, ?)",
-                           ("SAIDA", quantidade_baixa, produto["id"], observacao))
-            conn.commit()
-
-            st.success("✅ Baixa realizada com sucesso!")
-            if nova_qtd <= produto["estoque_minimo"]:
-                st.warning("⚠️ Estoque ficou abaixo do mínimo!")
-            st.cache_data.clear()
-            st.rerun()
-        except Exception as e:
-            st.error(f"Erro ao dar baixa: {str(e)}")
 
 if __name__ == "__main__":
     main()

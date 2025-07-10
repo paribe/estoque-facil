@@ -673,7 +673,7 @@ def main():
         
         selected = option_menu(
             menu_title="Menu Principal",
-            options=["Dashboard", "Produtos", "Adicionar Produto", "Baixa de Estoque", "Alertas", "Histórico"],
+            options=["Dashboard", "Produtos", "Adicionar Produto", "Alertas", "Histórico"],
             icons=["house", "box", "plus-circle", "exclamation-triangle", "clock-history"],
             menu_icon="cast",
             default_index=0,
@@ -692,56 +692,10 @@ def main():
         produtos()
     elif selected == "Adicionar Produto":
         adicionar_produto_page()
-    elif selected == "Baixa de Estoque":
-        baixa_estoque()    
     elif selected == "Alertas":
         alertas()
     elif selected == "Histórico":
         historico()
-
-
-# OBS: O conteúdo do streamlit_app.py original foi mantido.
-# Apenas a funcionalidade de "Baixa de Estoque" foi adicionada como uma nova página e incluída no menu.
-# Abaixo está o código da nova página "Baixa de Estoque".
-# Esta função deve ser colocada após as demais definições de páginas.
-
-def baixa_estoque():
-    st.markdown('<div class="main-header"><h1>📉 Baixa de Estoque</h1></div>', unsafe_allow_html=True)
-    
-    df_produtos = get_produtos()
-    if df_produtos.empty:
-        st.info("Nenhum produto cadastrado ainda.")
-        return
-
-    produto_nome = st.selectbox("🔍 Selecione um produto:", df_produtos["nome"].tolist())
-    produto = df_produtos[df_produtos["nome"] == produto_nome].iloc[0]
-
-    st.write(f"**Estoque atual:** {produto['quantidade']} unidades")
-    st.write(f"**Estoque mínimo:** {produto['estoque_minimo']} unidades")
-    
-    quantidade_baixa = st.number_input("📦 Quantidade para dar baixa:", min_value=1, max_value=int(produto["quantidade"]), step=1)
-    observacao = st.text_area("📝 Observação (opcional):", placeholder="Ex: Venda realizada")
-
-    if st.button("✅ Confirmar Baixa"):
-        nova_qtd = produto["quantidade"] - quantidade_baixa
-        conn = init_database()
-        cursor = conn.cursor()
-        try:
-            # Atualizar quantidade
-            cursor.execute("UPDATE produtos SET quantidade = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?", 
-                           (nova_qtd, produto["id"]))
-            # Inserir movimentação
-            cursor.execute("INSERT INTO movimentacoes (tipo, quantidade, produto_id, observacao) VALUES (?, ?, ?, ?)",
-                           ("SAIDA", quantidade_baixa, produto["id"], observacao))
-            conn.commit()
-
-            st.success("✅ Baixa realizada com sucesso!")
-            if nova_qtd <= produto["estoque_minimo"]:
-                st.warning("⚠️ Estoque ficou abaixo do mínimo!")
-            st.cache_data.clear()
-            st.rerun()
-        except Exception as e:
-            st.error(f"Erro ao dar baixa: {str(e)}")
 
 if __name__ == "__main__":
     main()
