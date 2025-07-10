@@ -704,7 +704,6 @@ def main():
 # Apenas a funcionalidade de "Baixa de Estoque" foi adicionada como uma nova página e incluída no menu.
 # Abaixo está o código da nova página "Baixa de Estoque".
 # Esta função deve ser colocada após as demais definições de páginas.
-
 def baixa_estoque():
     st.markdown('<div class="main-header"><h1>📉 Baixa de Estoque</h1></div>', unsafe_allow_html=True)
     
@@ -716,32 +715,47 @@ def baixa_estoque():
     produto_nome = st.selectbox("🔍 Selecione um produto:", df_produtos["nome"].tolist())
     produto = df_produtos[df_produtos["nome"] == produto_nome].iloc[0]
 
-    st.write(f"**Estoque atual:** {produto['quantidade']} unidades")
-    st.write(f"**Estoque mínimo:** {produto['estoque_minimo']} unidades")
-    
-    quantidade_baixa = st.number_input("📦 Quantidade para dar baixa:", min_value=1, max_value=int(produto["quantidade"]), step=1)
+    estoque_atual = int(produto["quantidade"])
+    estoque_minimo = int(produto["estoque_minimo"])
+
+    st.write(f"**Estoque atual:** {estoque_atual} unidades")
+    st.write(f"**Estoque mínimo:** {estoque_minimo} unidades")
+
+    quantidade_baixa = st.number_input("📦 Quantidade para dar baixa:", min_value=1, step=1)
     observacao = st.text_area("📝 Observação (opcional):", placeholder="Ex: Venda realizada")
 
     if st.button("✅ Confirmar Baixa"):
-        nova_qtd = produto["quantidade"] - quantidade_baixa
+        if quantidade_baixa > estoque_atual:
+            st.error("❌ Quantidade digitada é maior que o estoque atual. Operação cancelada.")
+            return
+
+        nova_qtd = estoque_atual - quantidade_baixa
         conn = init_database()
         cursor = conn.cursor()
         try:
-            # Atualizar quantidade
-            cursor.execute("UPDATE produtos SET quantidade = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?", 
-                           (nova_qtd, produto["id"]))
+            # Atualizar estoque do produto
+            cursor.execute(
+                "UPDATE produtos SET quantidade = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?",
+                (nova_qtd, produto["id"])
+            )
+
             # Inserir movimentação
-            cursor.execute("INSERT INTO movimentacoes (tipo, quantidade, produto_id, observacao) VALUES (?, ?, ?, ?)",
-                           ("SAIDA", quantidade_baixa, produto["id"], observacao))
+            cursor.execute(
+                "INSERT INTO movimentacoes (tipo, quantidade, produto_id, observacao) VALUES (?, ?, ?, ?)",
+                ("SAIDA", quantidade_baixa, produto["id"], observacao)
+            )
+
             conn.commit()
 
-            st.success("✅ Baixa realizada com sucesso!")
-            if nova_qtd <= produto["estoque_minimo"]:
-                st.warning("⚠️ Estoque ficou abaixo do mínimo!")
+            st.success("✅ Baixa de estoque realizada com sucesso!")
+
+            if nova_qtd <= estoque_minimo:
+                st.warning("⚠️ Atenção: Estoque ficou abaixo do mínimo!")
+
             st.cache_data.clear()
             st.rerun()
+
         except Exception as e:
-            st.error(f"Erro ao dar baixa: {str(e)}")
 
 if __name__ == "__main__":
     main()
