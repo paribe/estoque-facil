@@ -1,0 +1,34 @@
+
+INSTRUÇÕES DE INSTALAÇÃO E USO
+==============================
+
+1. EXECUÇÃO LOCAL:
+   - Instale as dependências: pip install -r streamlit_requirements.txt
+   - Execute: streamlit run streamlit_app.py
+   - Acesse: http://localhost:8501
+
+2. DEPLOY NO STREAMLIT CLOUD:
+   - Faça upload dos arquivos para um repositório GitHub
+   - Acesse: https://share.streamlit.io
+   - Conecte seu repositório GitHub
+   - Configure o arquivo principal: streamlit_app.py
+   - Configure o arquivo de dependências: streamlit_requirements.txt
+
+3. ARQUIVOS INCLUÍDOS:
+   - streamlit_app.py: Aplicação principal
+   - streamlit_requirements.txt: Dependências do projeto
+   - README.md: Documentação completa
+   - .streamlit/config.toml: Configurações do Streamlit
+
+4. FUNCIONALIDADES:
+   - Dashboard com métricas e gráficos
+   - Gerenciamento de produtos (CRUD)
+   - Alertas de estoque baixo
+   - Histórico de movimentações
+   - Filtros e buscas
+
+5. BANCO DE DADOS:
+   - SQLite (criado automaticamente)
+   - Arquivo: estoque_facil.db
+
+Para suporte, consulte o README.md
